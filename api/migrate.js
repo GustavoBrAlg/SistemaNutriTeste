@@ -1,24 +1,36 @@
-const { sql } = require('@vercel/postgres');
 const fs = require('fs');
 const path = require('path');
+const { query } = require('../lib/db');
 
-export default async function handler(request, response) {
+module.exports = async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   try {
     const schemaPath = path.join(process.cwd(), 'schema.sql');
-    const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+    let schemaSql = '';
 
-    // Executa as instruções SQL no Vercel Postgres
-    await sql.query(schemaSql);
+    if (fs.existsSync(schemaPath)) {
+      schemaSql = fs.readFileSync(schemaPath, 'utf8');
+    }
 
-    return response.status(200).json({
+    if (schemaSql) {
+      await query(schemaSql);
+    }
+
+    return res.status(200).json({
       success: true,
-      message: 'Esquema de banco de dados executado e atualizado com sucesso no Vercel Postgres!'
+      message: 'Esquema de banco de dados executado e sincronizado com sucesso!'
     });
   } catch (error) {
-    console.error('Erro ao executar migração:', error);
-    return response.status(500).json({
+    console.error('Erro na migração:', error);
+    return res.status(500).json({
       success: false,
       error: error.message
     });
   }
-}
+};

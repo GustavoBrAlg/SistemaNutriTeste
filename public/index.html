@@ -1,115 +1,158 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Gestão Escolar</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #0f172a;
-      color: #f8fafc;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
-    .card {
-      background: #1e293b;
-      padding: 2.5rem;
-      border-radius: 1rem;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-      max-width: 540px;
-      width: 90%;
-      text-align: center;
-      border: 1px solid #334155;
-    }
-    h1 {
-      margin-top: 0;
-      color: #38bdf8;
-      font-size: 1.8rem;
-    }
-    p {
-      color: #94a3b8;
-      line-height: 1.6;
-    }
-    button {
-      background: linear-gradient(135deg, #0284c7, #2563eb);
-      color: white;
-      border: none;
-      padding: 0.85rem 1.6rem;
-      border-radius: 0.5rem;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 1.5rem;
-      transition: opacity 0.2s;
-    }
-    button:hover {
-      opacity: 0.9;
-    }
-    #result {
-      margin-top: 1.5rem;
-      padding: 1rem;
-      border-radius: 0.5rem;
-      display: none;
-      text-align: left;
-      font-size: 0.9rem;
-      white-space: pre-wrap;
-      word-break: break-all;
-    }
-    .success {
-      background: #064e3b;
-      color: #6ee7b7;
-      border: 1px solid #059669;
-    }
-    .error {
-      background: #450a0a;
-      color: #fca5a5;
-      border: 1px solid #dc2626;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Diário Escolar Eletrônico</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="card">
-    <h1>Sistema de Gestão Escolar</h1>
-    <p>Estrutura de tabelas e relacionamentos configurada com sucesso para implantação no <strong>Vercel Postgres</strong>.</p>
-    
-    <button id="btnMigrate" onclick="executarMigracao()">Criar Tabelas no Banco</button>
-    <div id="result"></div>
-  </div>
+  <!-- TOAST NOTIFICATIONS -->
+  <div id="toast" class="toast"></div>
 
-  <script>
-    async function executarMigracao() {
-      const btn = document.getElementById('btnMigrate');
-      const resDiv = document.getElementById('result');
-      btn.disabled = true;
-      btn.innerText = 'Processando tabelas...';
-      resDiv.style.display = 'none';
+  <!-- TELA 1: LOGIN DO DOCENTE -->
+  <section id="viewLogin" class="view-section active">
+    <div class="login-card">
+      <div class="brand-header">
+        <div class="badge-icon">📚</div>
+        <h2>Diário Eletrônico</h2>
+        <p>Acesso exclusivo para docentes da instituição</p>
+      </div>
 
-      try {
-        const response = await fetch('/api/migrate');
-        const data = await response.json();
+      <form id="formLogin" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label for="nif">NIF do Docente</label>
+          <div class="input-wrapper">
+            <input type="number" id="nif" placeholder="Ex: 1001" required autocomplete="username" />
+            <span class="field-hint">Identificador numérico de cadastro</span>
+          </div>
+        </div>
 
-        resDiv.style.display = 'block';
-        if (data.success) {
-          resDiv.className = 'success';
-          resDiv.innerText = '✓ ' + data.message;
-        } else {
-          resDiv.className = 'error';
-          resDiv.innerText = '✗ Erro: ' + (data.error || 'Falha ao executar migração.');
-        }
-      } catch (err) {
-        resDiv.style.display = 'block';
-        resDiv.className = 'error';
-        resDiv.innerText = '✗ Falha na requisição: ' + err.message;
-      } finally {
-        btn.disabled = false;
-        btn.innerText = 'Criar Tabelas no Banco';
-      }
-    }
-  </script>
+        <div class="form-group">
+          <label for="senha">Senha de Acesso</label>
+          <div class="input-wrapper">
+            <input type="password" id="senha" placeholder="Digite sua senha" required autocomplete="current-password" />
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="btnLogin">
+          <span class="btn-text">Entrar no Diário</span>
+          <span class="btn-loader" style="display:none;">Autenticando...</span>
+        </button>
+
+        <div class="quick-credentials">
+          <p>Credenciais para teste rápido:</p>
+          <div class="quick-tags">
+            <span class="tag-creds" onclick="fillCreds(1001, '123456')">NIF 1001 / 123456 (Prof. Carlos)</span>
+            <span class="tag-creds" onclick="fillCreds(1002, '123456')">NIF 1002 / 123456 (Profª. Maria)</span>
+          </div>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- TELA 2: DASHBOARD / LISTA DE TURMAS -->
+  <section id="viewTurmas" class="view-section">
+    <!-- TOPBAR -->
+    <header class="app-header">
+      <div class="header-left">
+        <span class="logo-text">🎓 Diário Escolar</span>
+        <span class="breadcrumb-sep">/</span>
+        <span class="header-subtitle">Minhas Turmas Atribuídas</span>
+      </div>
+      <div class="header-right">
+        <div class="user-chip">
+          <div class="avatar-circle" id="userAvatar">D</div>
+          <div class="user-meta">
+            <span class="user-name" id="userName">Docente</span>
+            <span class="user-nif" id="userNif">NIF: ----</span>
+          </div>
+        </div>
+        <button class="btn btn-outline-danger" onclick="logout()">Sair</button>
+      </div>
+    </header>
+
+    <main class="main-container">
+      <div class="page-title-row">
+        <div>
+          <h1>Turmas em Exercício</h1>
+          <p>Selecione uma turma para registrar presenças, avaliar alunos e consultar diários.</p>
+        </div>
+        <button class="btn btn-secondary" onclick="loadTurmas()">🔄 Atualizar Lista</button>
+      </div>
+
+      <div class="turmas-grid" id="turmasGrid">
+        <!-- Renderizado dinamicamente via JS -->
+      </div>
+    </main>
+  </section>
+
+  <!-- TELA 3: DIÁRIO DA TURMA / ALUNOS, PRESENÇAS E NOTAS -->
+  <section id="viewDiario" class="view-section">
+    <header class="app-header">
+      <div class="header-left">
+        <button class="btn-back" onclick="voltarTurmas()" title="Voltar para Turmas">
+          ← Voltar
+        </button>
+        <span class="breadcrumb-sep">|</span>
+        <div>
+          <span class="turma-badge" id="turmaCodigoBadge">Turma #---</span>
+          <h3 id="turmaNomeHeader" style="margin:0; font-size:1.1rem; display:inline-block; vertical-align:middle;">Carregando...</h3>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="user-chip">
+          <span class="user-name" id="userNameDiario">Docente</span>
+        </div>
+        <button class="btn btn-outline-danger" onclick="logout()">Sair</button>
+      </div>
+    </header>
+
+    <main class="main-container">
+      <!-- INFO CARD DA TURMA SELECIONADA -->
+      <div class="turma-detail-card" id="turmaDetailCard">
+        <!-- Informações completas da turma -->
+      </div>
+
+      <!-- PAINEL DE CONTROLE DE DIÁRIO -->
+      <div class="section-header-row">
+        <div>
+          <h2>Alunos Matriculados & Avaliação</h2>
+          <p>Ajuste presenças, lance notas e acompanhe o status final de cada estudante em tempo real.</p>
+        </div>
+        <div class="quick-stats-row">
+          <div class="stat-pill">Total: <strong id="statTotalAlunos">0</strong></div>
+          <div class="stat-pill stat-success">Média Turma: <strong id="statMediaTurma">--</strong></div>
+        </div>
+      </div>
+
+      <!-- TABELA DE ALUNOS -->
+      <div class="table-card">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Matrícula</th>
+                <th>Nome do Aluno</th>
+                <th style="text-align: center;">Presenças (Aulas)</th>
+                <th style="text-align: center;">Frequência %</th>
+                <th style="text-align: center;">Nota (0 a 10)</th>
+                <th style="text-align: center;">Status Final</th>
+                <th style="text-align: center;">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="alunosTableBody">
+              <!-- Renderizado dinamicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </section>
+
+  <script src="app.js"></script>
 </body>
 </html>
