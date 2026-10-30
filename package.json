@@ -1,0 +1,12 @@
+{
+  "name": "sistema-gestao-escolar",
+  "version": "1.0.0",
+  "description": "Sistema de Gestao Escolar com integracao Vercel Postgres",
+  "scripts": {
+    "migrate": "node scripts/migrate.js"
+  },
+  "dependencies": {
+    "@vercel/postgres": "^0.10.0",
+    "pg": "^8.13.1"
+  }
+}
