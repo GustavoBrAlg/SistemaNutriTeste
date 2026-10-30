@@ -15,7 +15,15 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { nif, senha } = req.body || {};
+    let body = req.body;
+    if (typeof body === 'string') {
+      try {
+        body = JSON.parse(body);
+      } catch (e) {
+        body = {};
+      }
+    }
+    const { nif, senha } = body || {};
 
     if (!nif || !senha) {
       return res.status(400).json({ error: 'NIF e Senha são obrigatórios.' });

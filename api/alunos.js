@@ -67,7 +67,15 @@ module.exports = async function handler(req, res) {
   // PUT /api/alunos - Atualização de nota e presença de um aluno
   if (req.method === 'PUT' || req.method === 'POST') {
     try {
-      const { codigoTurma, matricula, nota, presencas, statusFinal, nifDocente } = req.body || {};
+      let body = req.body;
+      if (typeof body === 'string') {
+        try {
+          body = JSON.parse(body);
+        } catch (e) {
+          body = {};
+        }
+      }
+      const { codigoTurma, matricula, nota, presencas, statusFinal, nifDocente } = body || {};
 
       if (!codigoTurma || !matricula) {
         return res.status(400).json({ error: 'codigoTurma e matricula são obrigatórios.' });
